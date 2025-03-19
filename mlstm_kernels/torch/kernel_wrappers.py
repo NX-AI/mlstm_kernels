@@ -112,6 +112,8 @@ def wrap_chunkwise__arbitrary_sequence_length(
             ) if enable_logging else None
             remaining_seq_len = S - seq_len_start_idx
             num_chunks = remaining_seq_len // chunk_size_iter
+            if num_chunks == 0:
+                continue
             LOGGER.debug(
                 f"chunk_size={chunk_size_iter}, remaining_seq_len={remaining_seq_len}"
             ) if enable_logging else None
