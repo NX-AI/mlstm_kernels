@@ -6,9 +6,9 @@ from pathlib import Path
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-fontsize_delta = 2.5
+fontsize_delta = 4.5
 FONTSIZE = 12 + fontsize_delta
-SMALL_OFFSET = 1
+SMALL_OFFSET = 2
 FONTSIZE_SMALL = FONTSIZE - SMALL_OFFSET
 FONTSIZE_TICKS = FONTSIZE_SMALL
 

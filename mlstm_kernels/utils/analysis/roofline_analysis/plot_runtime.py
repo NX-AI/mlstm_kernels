@@ -251,10 +251,10 @@ def plot_runtime(
             legend_labels += labels_theoretical_runtime
 
         custom_lines.append(Line2D([0], [0], color="grey", linestyle="-", lw=4))
-        legend_labels.append("Theoretical Chunk Size Optimal Runtime")
+        legend_labels.append("Chunk Size\nOptimal Runtime")
 
         custom_lines.append(Line2D([0], [0], color=color_runtime_df, marker="s"))
-        legend_labels.append("mLSTMsig TFLA Forward Measured")
+        legend_labels.append("mLSTMsig TFLA\nForward Measured")
 
         ax.legend(
             handles=custom_lines,
@@ -436,11 +436,11 @@ def create_runtime_plot():
     legend_kwargs = {
         "loc": "upper left",
         "ncol": 1,
-        "bbox_to_anchor": (1.0, 1.05),
+        "bbox_to_anchor": (1.0, 1.1),
         "frameon": False,
         "facecolor": "white",
         # "alignment": "top",
-        "labelspacing": 1.1,
+        "labelspacing": 0.9,
     }
 
     with get_plot_mpl_context():
@@ -463,9 +463,9 @@ def create_runtime_plot():
             legend_args=legend_kwargs,
             labels_theoretical_runtime=[
                 # r"V100 Theoretical Runtime",  # Intensity$\approx$160 FLOP/byte",
-                r"A100 Theoretical Runtime",  # Intensity$\approx$160 FLOP/byte",
-                r"H100 Theoretical Runtime",  # Intensity$\approx$295 FLOP/byte",
-                r"B200 Theoretical Runtime",  # Intensity$\approx$292 FLOP/byte",
+                r"A100 Runtime",  # Intensity$\approx$160 FLOP/byte",
+                r"H100 Runtime",  # Intensity$\approx$295 FLOP/byte",
+                r"B200 Runtime",  # Intensity$\approx$292 FLOP/byte",
             ],
             fn_calculate_optimal_chunk_sizes_for_intensities=calc_optimal_chunksize_for_intensities,
             fn_calculate_theoretical_runtime_for_optimal_chunk_sizes_and_intensities=calc_runtime_opt_chunk_size_and_intensity,
