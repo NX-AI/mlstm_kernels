@@ -177,7 +177,7 @@ def mlstm_chunkwise__recurrent_fw_C_kernel(
         scaG_k_val = vecB_last_k_val
 
         # scaM_inter_k update
-        scaAmax_k_val, _ = tl.max(vecA_k_val)
+        scaAmax_k_val = tl.max(vecA_k_val)
         scaMinter_next_val = tl.maximum(scaG_k_val + scaMinter_k_val, scaAmax_k_val)
 
         # load matK_k, matV_k
