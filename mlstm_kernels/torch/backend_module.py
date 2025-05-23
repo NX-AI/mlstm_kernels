@@ -121,6 +121,7 @@ class mLSTMBackend(nn.Module):
             eps=config.eps,
             autocast_kernel_dtype=getattr(torch, config.autocast_kernel_dtype),
             return_last_states=True,
+            dtype_state=config.inference_state_dtype,
         )
 
         train_kernel_fn = partial(
