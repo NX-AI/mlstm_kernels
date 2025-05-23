@@ -25,6 +25,7 @@ def wrap_chunkwise__arbitrary_sequence_length(
     eps: float = 1e-6,
     autocast_kernel_dtype: torch.dtype = torch.bfloat16,
     chunk_size: int = 64,
+    dtype_state: torch.dtype = torch.float32,
     enable_logging: bool = False,
 ) -> (
     torch.Tensor | tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor, torch.Tensor]]
@@ -60,6 +61,8 @@ def wrap_chunkwise__arbitrary_sequence_length(
         eps: The epsilon value used for numerical stability
         autocast_kernel_dtype: The dtype used for the kernel computation
         chunk_size: The chunk size used for the chunkwise kernel
+        dtype_state: The dtype for the state. This function creates the initial state with this dtype.
+                     Note: Make sure you pass this dtype also to the kernel functions.
         enable_logging: If True, the function will log debug information. Default is False.
 
     Returns:
@@ -83,17 +86,17 @@ def wrap_chunkwise__arbitrary_sequence_length(
     c_state = (
         c_initial
         if c_initial is not None
-        else torch.zeros(B, NH, DHQK, DHHV, device=k.device, dtype=torch.float32)
+        else torch.zeros(B, NH, DHQK, DHHV, device=k.device, dtype=dtype_state)
     )
     n_state = (
         n_initial
         if n_initial is not None
-        else torch.zeros(B, NH, DHQK, device=k.device, dtype=torch.float32)
+        else torch.zeros(B, NH, DHQK, device=k.device, dtype=dtype_state)
     )
     m_state = (
         m_initial
         if m_initial is not None
-        else torch.zeros(B, NH, 1, device=k.device, dtype=torch.float32)
+        else torch.zeros(B, NH, 1, device=k.device, dtype=dtype_state)
     )
 
     if S > 1:
