@@ -14,7 +14,12 @@ These benchmarks were run using:
 * **Software Stack** : ROCm 6.4
 * **PyTorch** : with TunableOp support enabled
 
-> ⚠️ Your results may vary based on ROCm/PyTorch version and system configuration.
+A Dockerfile and corresponding environment file are included in the repository to help reproduce the environment:
+
+* `envs/hf_model_benchmark_amd.dockerfile`
+* `envs/environment_pt240_rocm64.txt`
+
+> 🐳 The Docker image used for benchmarking was built using the above files. While they provide a tested baseline, your results may still vary depending on your specific system configuration and ROCm/PyTorch version.
 
 ## ⚡️Tuning for `--ttft` benchmark
 
