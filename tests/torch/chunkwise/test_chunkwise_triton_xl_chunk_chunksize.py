@@ -1,0 +1,192 @@
+#  Copyright (c) NXAI GmbH.
+#  This software may be used and distributed according to the terms of the NXAI Community License Agreement.
+
+import logging
+
+import pytest
+import torch
+from mlstm_kernels.torch.chunkwise.native import mlstm_chunkwise__native_autograd, mlstm_chunkwise__native_custbw
+from mlstm_kernels.torch.chunkwise.triton_limit_chunk import mlstm_chunkwise__limit_chunk
+from mlstm_kernels.torch.chunkwise.triton_xl_chunk import mlstm_chunkwise__xl_chunk
+from mlstm_kernels.torch.parallel.native_stablef import (
+    mlstm_parallel__native_stablef_custbw,
+)
+from functools import partial
+from ...conftest import final_combinations, combinations_other_list
+
+LOGGER = logging.getLogger(__name__)
+
+TEST_FOLDER_NAME_PREFIX = "chunkwise-triton_xl_chunk"
+
+combinations_long = {
+    "S": [1024],
+    "B": [2],
+    "NH": [2],
+    "DHQK": [128],
+    "DHHV": [128],
+}
+fun_combs = [values for values in zip(*combinations_long.values())]
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
+@pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], fun_combs)
+@pytest.mark.parametrize("chunk_size", [64, 128, 256, 512])
+def test_triton_chunkwise_native_vs_native_parallel_stablef_fp32(
+    test_session_folder,
+    test_output_folder,
+    mlstm_parallel_interface_test,
+    S,
+    B,
+    NH,
+    DHQK,
+    DHHV,
+    chunk_size,
+):
+    print(f"S{S}B{B}NH{NH}DHQK{DHQK}DHHV{DHHV}")
+    mlstm_parallel_interface_test(
+        baseline_fn=mlstm_parallel__native_stablef_custbw,
+        target_fn=partial(mlstm_chunkwise__native_custbw, chunk_size=chunk_size),
+        baseline_name="native_parallel_stablef_custbw",
+        target_name=f"triton_chunkwise_native-cs{chunk_size}",
+        S=S,
+        B=B,
+        NH=NH,
+        DHQK=DHQK,
+        DHHV=DHHV,
+        dtype=torch.float32,
+        atol_fw=2e-2,
+        rtol_fw=5e-2,
+        atol_fwbw=42e-1,  # we need to increase this tolerance for vecF.grad (max diff val 0.267...)
+        rtol_fwbw=0.5,
+        vmax=1e-3,
+        test_folder_name_prefix=TEST_FOLDER_NAME_PREFIX,
+        save_dir=str(test_session_folder),
+        add_fp64_baseline=True,
+        save_output_tensors_dir=str(test_output_folder),
+    )
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
+@pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], fun_combs)
+@pytest.mark.parametrize("chunk_size", [64, 128, 256, 512, 1024])
+def test_triton_chunkwise_xl_chunk_vs_native_parallel_stablef_fp32(
+    test_session_folder,
+    test_output_folder,
+    mlstm_parallel_interface_test,
+    S,
+    B,
+    NH,
+    DHQK,
+    DHHV,
+    chunk_size,
+):
+    print(f"S{S}B{B}NH{NH}DHQK{DHQK}DHHV{DHHV}")
+    mlstm_parallel_interface_test(
+        baseline_fn=mlstm_parallel__native_stablef_custbw,
+        target_fn=partial(mlstm_chunkwise__xl_chunk, chunk_size=chunk_size),
+        baseline_name="native_parallel_stablef_custbw",
+        target_name=f"triton_chunkwise_xl_chunk-cs{chunk_size}",
+        S=S,
+        B=B,
+        NH=NH,
+        DHQK=DHQK,
+        DHHV=DHHV,
+        dtype=torch.float32,
+        atol_fw=2e-2,
+        rtol_fw=5e-2,
+        atol_fwbw=42e-1,  # we need to increase this tolerance for vecF.grad (max diff val 0.267...)
+        rtol_fwbw=0.5,
+        vmax=1e-3,
+        test_folder_name_prefix=TEST_FOLDER_NAME_PREFIX,
+        save_dir=str(test_session_folder),
+        add_fp64_baseline=True,
+        save_output_tensors_dir=str(test_output_folder),
+    )
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
+@pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], fun_combs)
+@pytest.mark.parametrize("chunk_size", [64])
+def test_triton_chunkwise_limit_chunk_vs_native_parallel_stablef_fp32(
+    test_session_folder,
+    test_output_folder,
+    mlstm_parallel_interface_test,
+    S,
+    B,
+    NH,
+    DHQK,
+    DHHV,
+    chunk_size,
+):
+    print(f"S{S}B{B}NH{NH}DHQK{DHQK}DHHV{DHHV}")
+    mlstm_parallel_interface_test(
+        baseline_fn=mlstm_parallel__native_stablef_custbw,
+        target_fn=partial(mlstm_chunkwise__limit_chunk, chunk_size=chunk_size),
+        baseline_name="native_parallel_stablef_custbw",
+        target_name=f"triton_chunkwise_limit_chunk-cs{chunk_size}",
+        S=S,
+        B=B,
+        NH=NH,
+        DHQK=DHQK,
+        DHHV=DHHV,
+        dtype=torch.float32,
+        atol_fw=2e-2,
+        rtol_fw=5e-2,
+        atol_fwbw=42e-1,  # we need to increase this tolerance for vecF.grad (max diff val 0.267...)
+        rtol_fwbw=0.5,
+        vmax=1e-3,
+        test_folder_name_prefix=TEST_FOLDER_NAME_PREFIX,
+        save_dir=str(test_session_folder),
+        add_fp64_baseline=True,
+        save_output_tensors_dir=str(test_output_folder),
+    )
+
+# @pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
+# @pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], combinations_other_list)
+# @pytest.mark.parametrize("chunk_size", [64, 128, 256])
+# def test_triton_chunkwise_xl_chunk_backend_module_vs_native_parallel_stablef_fp32(
+#     test_session_folder,
+#     test_output_folder,
+#     mlstm_parallel_interface_test,
+#     S,
+#     B,
+#     NH,
+#     DHQK,
+#     DHHV,
+#     chunk_size,
+# ):
+#     """This is a integration test for the mlstm siging chunkwise kernel in the
+#     backend module. It compares the output of the mlstm siging chunkwise kernel with the native pytroch impl."""
+#     print(f"S{S}B{B}NH{NH}DHQK{DHQK}DHHV{DHHV}")
+
+#     # create backend module:
+#     from mlstm_kernels.torch.backend_module import mLSTMBackend, mLSTMBackendConfig
+
+#     backend_cfg = mLSTMBackendConfig(
+#         chunkwise_kernel="chunkwise--triton_xl_chunk",
+#         mode="train",
+#         chunk_size=chunk_size,
+#         return_last_states=False,
+#     )
+#     chunkwise_siging_backend_module = mLSTMBackend(config=backend_cfg)
+
+#     mlstm_parallel_interface_test(
+#         baseline_fn=mlstm_parallel__native_stablef_custbw,
+#         target_fn=chunkwise_siging_backend_module,
+#         baseline_name="native_parallel_stablef_custbw_norm",
+#         target_name=f"triton_chunkwise_xl_chunk-cs{chunk_size}",
+#         S=S,
+#         B=B,
+#         NH=NH,
+#         DHQK=DHQK,
+#         DHHV=DHHV,
+#         dtype=torch.bfloat16,
+#         atol_fw=2e-2,
+#         rtol_fw=5e-2,
+#         atol_fwbw=4e-1,  # we need to increase this tolerance for vecF.grad (max diff val 0.575306)
+#         rtol_fwbw=0.5,
+#         vmax=1e-3,
+#         test_folder_name_prefix=TEST_FOLDER_NAME_PREFIX,
+#         save_dir=str(test_session_folder),
+#         add_fp64_baseline=False,
+#         save_output_tensors_dir=str(test_output_folder),
+#         pass_EPS_to_kernels=False,
+#     )

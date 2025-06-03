@@ -11,7 +11,7 @@ from mlstm_kernels.torch.parallel.native_stablef import (
     mlstm_parallel__native_stablef_custbw,
 )
 
-from ...conftest import final_combinations
+from ...conftest import final_combinations, combinations_other_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ def test_state_passing(mlstm_state_passing_test, state_passing_qkvif):
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
-@pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], final_combinations)
+@pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], combinations_other_list)
 @pytest.mark.parametrize("chunk_size", [64, 128, 256])
 def test_triton_chunkwise_xl_chunk_backend_module_vs_native_parallel_stablef_fp32(
     test_session_folder,
@@ -111,7 +111,7 @@ def test_triton_chunkwise_xl_chunk_backend_module_vs_native_parallel_stablef_fp3
         NH=NH,
         DHQK=DHQK,
         DHHV=DHHV,
-        dtype=torch.float32,
+        dtype=torch.bfloat16,
         atol_fw=2e-2,
         rtol_fw=5e-2,
         atol_fwbw=4e-1,  # we need to increase this tolerance for vecF.grad (max diff val 0.575306)

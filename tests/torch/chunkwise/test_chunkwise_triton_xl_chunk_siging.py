@@ -21,9 +21,18 @@ LOGGER = logging.getLogger(__name__)
 
 TEST_FOLDER_NAME_PREFIX = "chunkwise-triton_xl_chunk_ingsig"
 
+combinations_long = {
+    "S": [1024],
+    "B": [1],
+    "NH": [2],
+    "DHQK": [128],
+    "DHHV": [256],
+}
+fun_combs = [values for values in zip(*combinations_long.values())]
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
-@pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], final_combinations)
+@pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], fun_combs)
+@pytest.mark.parametrize("chunk_size", [64, 128, 256, 512])
 @pytest.mark.parametrize("normalize", [True, False])
 def test_triton_chunkwise_xl_chunk_ingsig_vs_native_parallel_stablef_fp32(
     test_session_folder,
@@ -34,6 +43,7 @@ def test_triton_chunkwise_xl_chunk_ingsig_vs_native_parallel_stablef_fp32(
     NH,
     DHQK,
     DHHV,
+    chunk_size,
     normalize,
 ):
     print(f"S{S}B{B}NH{NH}DHQK{DHQK}DHHV{DHHV}")
@@ -41,9 +51,9 @@ def test_triton_chunkwise_xl_chunk_ingsig_vs_native_parallel_stablef_fp32(
         baseline_fn=partial(
             mlstm_siging_parallel__native_custbw, stable_fgate=True, normalize=normalize
         ),
-        target_fn=partial(mlstm_siging_chunkwise__xl_chunk, normalize=normalize),
+        target_fn=partial(mlstm_siging_chunkwise__xl_chunk, normalize=normalize, chunk_size=chunk_size),
         baseline_name=f"native_parallel_stablef_custbw_siging_norm{normalize}",
-        target_name=f"triton_chunkwise_xl_chunk_siging_norm{normalize}",
+        target_name=f"triton_chunkwise_xl_chunk_siging_norm{normalize}_cs{chunk_size}",
         S=S,
         B=B,
         NH=NH,
@@ -83,8 +93,8 @@ def test_state_passing(mlstm_siging_state_passing_test, state_passing_qkvif, nor
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
-@pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], final_combinations)
-@pytest.mark.parametrize("chunk_size", [64, 128, 256])
+@pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], fun_combs) #final_combinations)
+@pytest.mark.parametrize("chunk_size", [64, 128, 256, 512])
 @pytest.mark.parametrize("normalize", [True, False])
 def test_triton_chunkwise_xl_chunk_siging_backend_module_vs_native_parallel_stablef_fp32(
     test_session_folder,
