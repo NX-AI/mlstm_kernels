@@ -19,7 +19,7 @@ LOGGER = logging.getLogger(__name__)
 TEST_FOLDER_NAME_PREFIX = "chunkwise-triton_xl_chunk"
 
 combinations_long = {
-    "S": [1024],
+    "S": [2048],
     "B": [2],
     "NH": [2],
     "DHQK": [128],
@@ -67,7 +67,7 @@ def test_triton_chunkwise_native_vs_native_parallel_stablef_fp32(
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
 @pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], fun_combs)
-@pytest.mark.parametrize("chunk_size", [64, 128, 256, 512, 1024])
+@pytest.mark.parametrize("chunk_size", [64, 128, 256, 512, 1024, 2048])
 def test_triton_chunkwise_xl_chunk_vs_native_parallel_stablef_fp32(
     test_session_folder,
     test_output_folder,
