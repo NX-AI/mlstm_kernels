@@ -50,7 +50,6 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
     L: tl.constexpr,
     siz_b_DHQK: tl.constexpr,
     siz_b_DHHV: tl.constexpr,
-    save_states_every_nth_chunk: tl.constexpr,
     USE_LAST_STATE: tl.constexpr,
     DTYPE: tl.constexpr = tl.float32,
     EPS: tl.constexpr = 1e-6,
@@ -100,24 +99,23 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
             order=(1, 0),
         )
         # ? end pointers
-        if k % save_states_every_nth_chunk == 0:
-            idx_k_save = k // save_states_every_nth_chunk
-            # * store matDeltaC_k_val from previous iteration in HBM
-            matDeltaCstates_k_ptr = tl.make_block_ptr(
-                base=matDeltaC_states
-                + idx_b_NH * str_matDeltaC_states_B_NH
-                + idx_k_save * DHQK * DHHV,
-                shape=(DHQK, DHHV),
-                strides=(str_matDeltaC_states_NCDHQK, str_matDeltaC_states_DHHV),
-                offsets=(idx_b_DHQK * siz_b_DHQK, idx_b_DHHV * siz_b_DHHV),
-                block_shape=(siz_b_DHQK, siz_b_DHHV),
-                order=(1, 0),
-            )
-            tl.store(
-                matDeltaCstates_k_ptr,
-                matDeltaC_k_val.to(tl.float32),
-                boundary_check=(0, 1),
-            )
+
+        # * store matDeltaC_k_val from previous iteration in HBM
+        matDeltaCstates_k_ptr = tl.make_block_ptr(
+            base=matDeltaC_states
+            + idx_b_NH * str_matDeltaC_states_B_NH
+            + k * DHQK * DHHV,
+            shape=(DHQK, DHHV),
+            strides=(str_matDeltaC_states_NCDHQK, str_matDeltaC_states_DHHV),
+            offsets=(idx_b_DHQK * siz_b_DHQK, idx_b_DHHV * siz_b_DHHV),
+            block_shape=(siz_b_DHQK, siz_b_DHHV),
+            order=(1, 0),
+        )
+        tl.store(
+            matDeltaCstates_k_ptr,
+            matDeltaC_k_val.to(tl.float32),
+            boundary_check=(0, 1),
+        )
 
         # * compute matDeltaC_km1_val
         # load scaG_k, vecB_k, scaM_inter_km1, scaM_inter_k, vecM_combine_k
