@@ -81,6 +81,7 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
 
     # iterate over chunks from last to first
     for k in range(NC, 0, -1):
+        # tl.device_print("k_idx:", k)
         # ? define pointers
         # load matQ in transposed form
         matQ_k_ptr = tl.make_block_ptr(
@@ -102,6 +103,7 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
         # ? end pointers
         if k % save_states_every_nth_chunk == 0:
             idx_k_save = k // save_states_every_nth_chunk
+            tl.device_print("k_idx, k_idx_save", k, idx_k_save)
             # * store matDeltaC_k_val from previous iteration in HBM
             matDeltaCstates_k_ptr = tl.make_block_ptr(
                 base=matDeltaC_states
@@ -115,10 +117,9 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
             )
             tl.store(
                 matDeltaCstates_k_ptr,
-                matDeltaC_k_val.to(tl.float32),
+                matDeltaC_k_val,
                 boundary_check=(0, 1),
             )
-
         # * compute matDeltaC_km1_val
         # load scaG_k, vecB_k, scaM_inter_km1, scaM_inter_k, vecM_combine_k
         # load vecF
@@ -165,7 +166,7 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
         # compute matDeltaC_km1
         matDeltaC_k_val = scaGbar_k_val * matDeltaC_k_val + tl.dot(
             matQbar_k_val, matDeltaH_k_val
-        )
+        ).to(tl.float32)
 
     # * store the first state from the last iteration
     matDeltaCstates_0_ptr = tl.make_block_ptr(
