@@ -77,6 +77,7 @@ def mlstm_chunkwise__recurrent_bw_dC(
 
         vecB_k = vecB[:, :, (k - 1), :]  # (B, NH, L)
         vecM_combine_k = vecM_combine[:, :, (k - 1) * L : k * L]  # (B, NH, L)
+        # print(f"vecB_k shape: {vecB_k.shape}, vecM_combine_k shape: {vecM_combine_k.shape}, scaM_inter_kminus1 shape: {scaM_inter_kminus1.shape}, scaM_inter_k shape: {scaM_inter_k.shape}")
         vecBbar_k = torch.exp(vecB_k + scaM_inter_kminus1 - vecM_combine_k)[
             :, :, :, None
         ]  # (B, NH, L, 1)
@@ -265,20 +266,6 @@ def mlstm_chunkwise_bw(
             num_chunks=NC,
         )
 
-    # save inputs
-    inp_dict_bw_dC = dict(
-        matQ=matQ,
-        vecB=vecB,
-        scaM_inter=scaM_all,
-        vecM_combine=vecM_out,
-        matDeltaH=matDeltaH,
-        vecN_out=vecN_out,
-        matDeltaC_last=matDeltaC_last,
-        CHUNK_SIZE=CHUNK_SIZE,
-        NUM_CHUNKS=NC,
-        EPS=EPS,
-    )
-
     # recurrent backward: compute the deltaC gradients
     matDeltaC_states = mlstm_chunkwise__recurrent_bw_dC(
         matQ=matQ,  # (B, NH, S, DHQK)
@@ -293,6 +280,25 @@ def mlstm_chunkwise_bw(
         num_chunks=NC,
         eps=EPS,
     )  # (B, NH, NC * DHQK, DHV)
+
+    # save bw dC inputs and outputs for debugging
+    inp_dict_bw_dC = dict(
+        matDeltaC_states=matDeltaC_states,
+        matQ=matQ,
+        vecB=vecB,
+        vecF=vecF,
+        scaM_inter=scaM_all,
+        vecM_combine=vecM_out,
+        matDeltaH=matDeltaH,
+        vecN_out=vecN_out,
+        matDeltaC_last=matDeltaC_last,
+        CHUNK_SIZE=CHUNK_SIZE,
+        NUM_CHUNKS=NC,
+        EPS=EPS,
+    )
+    save_file = f"/home/max/myrepos/nxai_public/mlstm_kernels_internal_cleaned/notebooks_kernel_dev/xl_chunk/debug_xl_chunk_bw_dC_inputs_cs{CHUNK_SIZE}.pt"
+    torch.save(inp_dict_bw_dC, save_file)
+    print(f"Saved inputs to {save_file}")
 
     # parallel backward: compute the deltaQ, deltaK, deltaV, deltaI gradients
     matC_k_states = matC_all[:, :, :-DHQK, :]  # take the first NC states
