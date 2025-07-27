@@ -55,7 +55,7 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
     DTYPE: tl.constexpr = tl.float32,
     EPS: tl.constexpr = 1e-6,
 ):
-    idx_b_DHQK, idx_b_DHHV, idx_b_NH = (
+    idx_b_DHQK, idx_b_DHHV, idx_b_BNH = (
         tl.program_id(0),
         tl.program_id(1),
         tl.program_id(2),
@@ -67,7 +67,7 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
     if USE_LAST_STATE:
         # each thread block loads a (siz_b_DHQK, siz_b_DHHV) tile of matDeltaC_last
         matDeltaC_last_ptr = tl.make_block_ptr(
-            base=matDeltaC_last + idx_b_NH * str_matDeltaC_last_B_NH,
+            base=matDeltaC_last + idx_b_BNH * str_matDeltaC_last_B_NH,
             shape=(DHQK, DHHV),
             strides=(str_matDeltaC_last_DHQK, str_matDeltaC_last_DHHV),
             offsets=(idx_b_DHQK * siz_b_DHQK, idx_b_DHHV * siz_b_DHHV),
@@ -85,7 +85,7 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
         # ? define pointers
         # load matQ in transposed form
         matQ_k_ptr = tl.make_block_ptr(
-            base=matQ + idx_b_NH * str_matQ_B_NH,
+            base=matQ + idx_b_BNH * str_matQ_B_NH,
             shape=(DHQK, S),
             strides=(str_matQ_DHQK, str_matQ_S),
             offsets=(idx_b_DHQK * siz_b_DHQK, (k - 1) * L),
@@ -93,7 +93,7 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
             order=(0, 1),
         )
         matDeltaH_ptr = tl.make_block_ptr(
-            base=matDeltaH + idx_b_NH * str_matDeltaH_B_NH,
+            base=matDeltaH + idx_b_BNH * str_matDeltaH_B_NH,
             shape=(S, DHHV),
             strides=(str_matDeltaH_S, str_matDeltaH_DHHV),
             offsets=((k - 1) * L, idx_b_DHHV * siz_b_DHHV),
@@ -107,7 +107,7 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
             # * store matDeltaC_k_val from previous iteration in HBM
             matDeltaCstates_k_ptr = tl.make_block_ptr(
                 base=matDeltaC_states
-                + idx_b_NH * str_matDeltaC_states_B_NH
+                + idx_b_BNH * str_matDeltaC_states_B_NH
                 + idx_k_save * DHQK * DHHV,
                 shape=(DHQK, DHHV),
                 strides=(str_matDeltaC_states_NCDHQK, str_matDeltaC_states_DHHV),
@@ -124,7 +124,7 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
         # load scaG_k, vecB_k, scaM_inter_km1, scaM_inter_k, vecM_combine_k
         # load vecF
         vecF_val = tl.load(
-            vecF + idx_b_NH * str_vecF_B_NH + (k - 1) * L + tl.arange(0, L),
+            vecF + idx_b_BNH * str_vecF_B_NH + (k - 1) * L + tl.arange(0, L),
         ).to(tl.float32)
         vecFlogsig_val = tl.log(tl.sigmoid(vecF_val))
 
@@ -133,14 +133,14 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
         scaG_k_val = tl.sum(vecFlogsig_val, axis=0)  # (1,)
 
         scaM_inter_km1_val = tl.load(
-            scaM_inter + idx_b_NH * str_scaM_inter_B_NH + (k - 1)
+            scaM_inter + idx_b_BNH * str_scaM_inter_B_NH + (k - 1)
         ).to(tl.float32)
-        scaM_inter_k_val = tl.load(scaM_inter + idx_b_NH * str_scaM_inter_B_NH + k).to(
+        scaM_inter_k_val = tl.load(scaM_inter + idx_b_BNH * str_scaM_inter_B_NH + k).to(
             tl.float32
         )
         vecM_combine_k_val = tl.load(
             vecM_combine
-            + idx_b_NH * str_vecM_combine_B_NH
+            + idx_b_BNH * str_vecM_combine_B_NH
             + (k - 1) * L
             + tl.arange(0, L)
         ).to(tl.float32)
@@ -155,7 +155,7 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
 
         # load vecN_out_k, matDeltaH_k
         vecN_out_k_val = tl.load(
-            vecN_out + idx_b_NH * str_vecN_out_B_NH + (k - 1) * L + tl.arange(0, L)
+            vecN_out + idx_b_BNH * str_vecN_out_B_NH + (k - 1) * L + tl.arange(0, L)
         ).to(tl.float32)  # (L,)
         matDeltaH_k_val = tl.load(matDeltaH_ptr, boundary_check=(0, 1)).to(
             tl.float32
@@ -170,7 +170,7 @@ def mlstm_chunkwise__recurrent_bw_dC_kernel(
 
     # * store the first state from the last iteration
     matDeltaCstates_0_ptr = tl.make_block_ptr(
-        base=matDeltaC_states + idx_b_NH * str_matDeltaC_states_B_NH + 0,
+        base=matDeltaC_states + idx_b_BNH * str_matDeltaC_states_B_NH + 0,
         shape=(DHQK, DHHV),
         strides=(str_matDeltaC_states_NCDHQK, str_matDeltaC_states_DHHV),
         offsets=(idx_b_DHQK * siz_b_DHQK, idx_b_DHHV * siz_b_DHHV),
