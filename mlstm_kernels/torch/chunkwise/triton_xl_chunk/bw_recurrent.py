@@ -53,12 +53,13 @@ def mlstm_chunkwise__recurrent_bw_dC(
     USE_LAST_STATE = matDeltaC_last is not None
 
     num_chunks_saved = NC // save_states_every_nth_chunk
-
-    matDeltaC_states = torch.empty(
+    print(f"num_chunks_saved: {num_chunks_saved}")
+    matDeltaC_states = torch.ones(
         (B, NH, (num_chunks_saved + 1) * DHQK, DHHV),
         dtype=torch.float32,
         device=_device,
     )
+    print(f"matDeltaC_states shape: {matDeltaC_states.shape}")
 
     siz_b_DHQK = get_head_dim_block_size(head_dim=DHQK, min_block_size=64)
     siz_b_DHHV = get_head_dim_block_size(head_dim=DHHV, min_block_size=64)
@@ -71,6 +72,7 @@ def mlstm_chunkwise__recurrent_bw_dC(
         num_warps = 4 if siz_b_DHQK == 64 else 2
 
     grid = (num_b_DHQK, num_b_DHHV, B * NH)
+    print(f"grid shape: {grid}")
     mlstm_chunkwise__recurrent_bw_dC_kernel[grid](
         matQ=matQ,
         vecF=vecF,
