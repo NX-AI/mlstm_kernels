@@ -149,6 +149,30 @@ def _mlstm_chunkwise_fwbw_generator(autocast_kernel_dtype: torch.dtype, chunk_si
 
     return _mlstm_chunkwise_fwbw
 
+# # TODO check if this is necessary:
+# # Note we pre-define the different kernels on module level, because
+# # torch._dynamo does not want to have class definitions in 
+# _mlstm_chunkwise_fwbw_float32 = _mlstm_chunkwise_fwbw_generator(
+#     autocast_kernel_dtype=torch.float32, chunk_size=64, eps=1e-6
+# )
+# _mlstm_chunkwise_fwbw_float16 = _mlstm_chunkwise_fwbw_generator(
+#     autocast_kernel_dtype=torch.float16, chunk_size=64, eps=1e-6
+# )
+# _mlstm_chunkwise_fwbw_bfloat16 = _mlstm_chunkwise_fwbw_generator(
+#     autocast_kernel_dtype=torch.bfloat16, chunk_size=64, eps=1e-6
+# )
+
+
+# def _get_chunkwise_fwbw_kernel(autocast_kernel_dtype: torch.dtype, **kwargs) -> Callable:
+#     if autocast_kernel_dtype == torch.float32:
+#         return _mlstm_chunkwise_fwbw_float32
+#     elif autocast_kernel_dtype == torch.float16:
+#         return _mlstm_chunkwise_fwbw_float16
+#     elif autocast_kernel_dtype == torch.bfloat16:
+#         return _mlstm_chunkwise_fwbw_bfloat16
+#     else:
+#         raise ValueError(f"Unsupported kernel dtype {autocast_kernel_dtype}.")
+
 def mlstm_chunkwise__limit_chunk(
     q: torch.Tensor,
     k: torch.Tensor,
