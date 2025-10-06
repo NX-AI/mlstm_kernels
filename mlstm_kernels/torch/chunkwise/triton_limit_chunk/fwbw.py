@@ -13,7 +13,7 @@ from .fw import mlstm_chunkwise_fw
 
 
 ## PyTorch Autograd Function - Boilerplate
-def _mlstm_chunkwise_fwbw_generator(autocast_kernel_dtype=torch.float16) -> Callable:
+def _mlstm_chunkwise_fwbw_generator(autocast_kernel_dtype: torch.dtype, chunk_size: int, eps: float) -> Callable:
     class _mlstm_chunkwise_fwbw(torch.autograd.Function):
         @staticmethod
         @custom_fwd(device_type="cuda", cast_inputs=autocast_kernel_dtype)
@@ -31,8 +31,6 @@ def _mlstm_chunkwise_fwbw_generator(autocast_kernel_dtype=torch.float16) -> Call
             qk_scale: float = None,
             return_last_states: bool = False,
             RECOMPUTE_STATES_IN_BW: bool = True,
-            CHUNK_SIZE: int = 64,
-            EPS: float = 1e-6,
         ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
             # matH_out (B, NH, S, DHHV), matC_last (B, NH, DHQK, DHHV), vecN_last (B, NH, DHQK), scaM_last (B, NH, 1)
             B, NH, S, DHQK = matQ.shape
@@ -51,8 +49,8 @@ def _mlstm_chunkwise_fwbw_generator(autocast_kernel_dtype=torch.float16) -> Call
                 qk_scale=qk_scale,
                 return_last_states=return_last_states,
                 return_all_states=(not RECOMPUTE_STATES_IN_BW),
-                EPS=EPS,
-                CHUNK_SIZE=CHUNK_SIZE,
+                EPS=eps,
+                CHUNK_SIZE=chunk_size,
             )
 
             if return_last_states:
@@ -79,8 +77,6 @@ def _mlstm_chunkwise_fwbw_generator(autocast_kernel_dtype=torch.float16) -> Call
                 scaM_all,
                 vecN_out,
                 vecM_out,
-                torch.tensor(CHUNK_SIZE),
-                torch.tensor(EPS),
             )
             return matH_out, matC_last, vecN_last, scaM_last
 
@@ -102,8 +98,6 @@ def _mlstm_chunkwise_fwbw_generator(autocast_kernel_dtype=torch.float16) -> Call
                 scaM_all,
                 vecN_out,
                 vecM_out,
-                CHUNK_SIZE,
-                EPS,
             ) = ctx.saved_tensors
             B, NH, S, DHQK = matQ.shape
             DHHV = matV.shape[-1]
@@ -135,8 +129,8 @@ def _mlstm_chunkwise_fwbw_generator(autocast_kernel_dtype=torch.float16) -> Call
                 matDeltaC_last=matDeltaC_last,
                 vecDeltaN_last=vecDeltaN_last,
                 scaDeltaM_last=scaDeltaM_last,
-                CHUNK_SIZE=int(CHUNK_SIZE),
-                EPS=float(EPS),
+                CHUNK_SIZE=chunk_size,
+                EPS=eps,
             )
 
             return (
@@ -151,34 +145,9 @@ def _mlstm_chunkwise_fwbw_generator(autocast_kernel_dtype=torch.float16) -> Call
                 None,
                 None,
                 None,
-                None,
-                None,
             )
 
     return _mlstm_chunkwise_fwbw
-
-
-_mlstm_chunkwise_fwbw_float32 = _mlstm_chunkwise_fwbw_generator(
-    autocast_kernel_dtype=torch.float32
-)
-_mlstm_chunkwise_fwbw_float16 = _mlstm_chunkwise_fwbw_generator(
-    autocast_kernel_dtype=torch.float16
-)
-_mlstm_chunkwise_fwbw_bfloat16 = _mlstm_chunkwise_fwbw_generator(
-    autocast_kernel_dtype=torch.bfloat16
-)
-
-
-def _get_chunkwise_fwbw_kernel(autocast_kernel_dtype: torch.dtype) -> Callable:
-    if autocast_kernel_dtype == torch.float32:
-        return _mlstm_chunkwise_fwbw_float32
-    elif autocast_kernel_dtype == torch.float16:
-        return _mlstm_chunkwise_fwbw_float16
-    elif autocast_kernel_dtype == torch.bfloat16:
-        return _mlstm_chunkwise_fwbw_bfloat16
-    else:
-        raise ValueError(f"Unsupported kernel dtype {autocast_kernel_dtype}.")
-
 
 def mlstm_chunkwise__limit_chunk(
     q: torch.Tensor,
@@ -196,7 +165,7 @@ def mlstm_chunkwise__limit_chunk(
 ) -> (
     torch.Tensor | tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor, torch.Tensor]]
 ):
-    _mlstm_chunkwise_fwbw = _get_chunkwise_fwbw_kernel(autocast_kernel_dtype)
+    _mlstm_chunkwise_fwbw = _mlstm_chunkwise_fwbw_generator(autocast_kernel_dtype=autocast_kernel_dtype, chunk_size=chunk_size, eps=eps)
     matH_out, matC_last, vecN_last, scaM_last = _mlstm_chunkwise_fwbw.apply(
         q,
         k,
@@ -209,8 +178,6 @@ def mlstm_chunkwise__limit_chunk(
         None,
         return_last_states,
         True,
-        chunk_size,
-        eps,
     )
     if return_last_states:
         return matH_out, (matC_last, vecN_last, scaM_last)
