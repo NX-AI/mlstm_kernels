@@ -1,6 +1,8 @@
 #  Copyright (c) NXAI GmbH.
 #  This software may be used and distributed according to the terms of the NXAI Community License Agreement.
 
+from pathlib import Path
+
 import matplotlib as mpl
 
 model_colors = {
@@ -61,3 +63,13 @@ style_dict = {
     },
     "zamba2": {"color": model_colors["zamba2"], "label": model_labels["zamba2"]},
 }
+
+
+def savefig(fig, filename: str):
+    dir = Path("./plots/")
+    dir.mkdir(parents=True, exist_ok=True)
+
+    if filename is not None:
+        for file_ending in ["png", "pdf", "svg"]:
+            file = Path(f"./plots/plot_{filename}.{file_ending}")
+            fig.savefig(file, dpi=300, bbox_inches="tight", pad_inches=-0.0020)

@@ -3,15 +3,15 @@
 
 import logging
 
+import pytest
+import torch
+
 from mlstm_kernels.torch.parallel.native_stablef import (
     mlstm_parallel__native_stablef_autograd,
 )
 from mlstm_kernels.torch.recurrent.native_sequence import (
     mlstm_recurrent_sequence__native_fw,
 )
-
-import pytest
-import torch
 
 from ...conftest import final_combinations
 
@@ -22,7 +22,7 @@ TEST_FOLDER_NAME_PREFIX = "recurrent_seq-torch_native"
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
 @pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], final_combinations)
-def test_recurrent_sequence_native_vs_native_parrallel_stablef_fp32(
+def test_recurrent_sequence_native_vs_native_parallel_stablef_fp32(
     test_session_folder, mlstm_parallel_interface_test, S, B, NH, DHQK, DHHV
 ):
     print(f"S{S}B{B}NH{NH}DHQK{DHQK}DHHV{DHHV}")

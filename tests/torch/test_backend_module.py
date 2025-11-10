@@ -89,7 +89,7 @@ def template_test_backend_module(
 
 @pytest.mark.parametrize(
     "B, NH, S, DHQK, DHHV, chunk_size",
-    [[1, 2, 128, 64, 128, 32], [1, 2, 64, 128, 128, 32]],
+    [[1, 2, 128, 64, 128, 64], [1, 2, 256, 128, 128, 64]],
 )
 @pytest.mark.parametrize("mode", ["train"])
 @pytest.mark.parametrize(
@@ -143,7 +143,7 @@ def test_backend_module_train(
 
 @pytest.mark.parametrize(
     "B, NH, S, DHQK, DHHV, chunk_size",
-    [[1, 2, 40, 64, 128, 32], [1, 2, 1, 128, 128, 32]],
+    [[1, 2, 40, 64, 128, 64], [1, 2, 1, 128, 128, 64]],
 )
 @pytest.mark.parametrize("mode", ["train_with_padding"])
 @pytest.mark.parametrize(
@@ -197,8 +197,8 @@ def test_backend_module_train_with_padding(
 @pytest.mark.parametrize(
     "B, NH, S, DHQK, DHHV, chunk_size",
     [
-        [1, 2, 43, 64, 128, 32],
-        [1, 2, 1, 128, 128, 32],
+        [1, 2, 43, 64, 128, 64],
+        [1, 2, 1, 128, 128, 64],
     ],
 )
 @pytest.mark.parametrize("mode", ["inference"])

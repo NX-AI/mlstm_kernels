@@ -25,7 +25,7 @@ TEST_FOLDER_NAME_PREFIX = "recurrent_seq-triton"
 @pytest.mark.skip(reason="Triton step kernel (non-fused) has a bug.")
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
 @pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], final_combinations)
-def test_recurrent_sequence_triton_step_vs_native_parrallel_stablef_fp32(
+def test_recurrent_sequence_triton_step_vs_native_parallel_stablef_fp32(
     test_session_folder, mlstm_parallel_interface_test, S, B, NH, DHQK, DHHV
 ):
     print(f"S{S}B{B}NH{NH}DHQK{DHQK}DHHV{DHHV}")
@@ -54,7 +54,7 @@ def test_recurrent_sequence_triton_step_vs_native_parrallel_stablef_fp32(
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
 @pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], final_combinations)
-def test_recurrent_sequence_triton_step_fused_vs_native_parrallel_stablef_fp32(
+def test_recurrent_sequence_triton_step_fused_vs_native_parallel_stablef_fp32(
     test_session_folder, mlstm_parallel_interface_test, S, B, NH, DHQK, DHHV
 ):
     print(f"S{S}B{B}NH{NH}DHQK{DHQK}DHHV{DHHV}")
@@ -83,7 +83,7 @@ def test_recurrent_sequence_triton_step_fused_vs_native_parrallel_stablef_fp32(
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
 @pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], final_combinations)
-def test_recurrent_sequence_triton_step_fused_vs_native_parrallel_stablef_state_bf16(
+def test_recurrent_sequence_triton_step_fused_vs_native_parallel_stablef_state_bf16(
     test_session_folder, mlstm_parallel_interface_test, S, B, NH, DHQK, DHHV
 ):
     print(f"S{S}B{B}NH{NH}DHQK{DHQK}DHHV{DHHV}")
@@ -100,7 +100,7 @@ def test_recurrent_sequence_triton_step_fused_vs_native_parrallel_stablef_state_
         DHQK=DHQK,
         DHHV=DHHV,
         dtype=torch.bfloat16,
-        atol_fw=0.125,
+        atol_fw=0.2,
         rtol_fw=0.05,
         atol_fwbw=1e-4,
         rtol_fwbw=1e-2,

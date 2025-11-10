@@ -25,7 +25,8 @@ def template_test_wrap_chunkwise__arbitrary_sequence_length(
     sequence_target: Callable,
     step_target: Callable,
     device: str,
-    dtype: str,
+    dtype_inputs: str,
+    dtype_state: str = "float32",
     atol: float = 1e-5,
     rtol: float = 1e-5,
     eps: float = 1e-6,
@@ -42,10 +43,10 @@ def template_test_wrap_chunkwise__arbitrary_sequence_length(
     i = torch.randn(B, NH, S)
     f = 3.0 + torch.randn(B, NH, S)
 
-    dtype = getattr(torch, dtype)
+    dtype_inputs = getattr(torch, dtype_inputs)
     device = torch.device(device)
     (q, k, v, i, f) = tuple(
-        map(lambda x: x.to(dtype=dtype, device=device), (q, k, v, i, f))
+        map(lambda x: x.to(dtype=dtype_inputs, device=device), (q, k, v, i, f))
     )
 
     # run the parallel baseline
@@ -59,8 +60,9 @@ def template_test_wrap_chunkwise__arbitrary_sequence_length(
     chunkwise_arbitrary_seq_len_fn = partial(
         wrap_chunkwise__arbitrary_sequence_length,
         mlstm_chunkwise_kernel=chunkwise_target,
-        mlstm_sequence_kernel=sequence_target,
-        mlstm_step_kernel=step_target,
+        mlstm_sequence_kernel=partial(sequence_target, dtype_state=getattr(torch, dtype_state)),
+        mlstm_step_kernel=partial(step_target, dtype_state=getattr(torch, dtype_state)),
+        dtype_state=getattr(torch, dtype_state)
     )
 
     # run the chunkwise arbitrary seq_len fn
@@ -77,6 +79,10 @@ def template_test_wrap_chunkwise__arbitrary_sequence_length(
         )
     )
 
+    assert c_last_cw_absl.dtype == getattr(torch, dtype_state), f"Got: {c_last_cw_absl.dtype}, Expected: {getattr(torch, dtype_state)}"
+    assert n_last_cw_absl.dtype == getattr(torch, dtype_state)
+    assert m_last_cw_absl.dtype == getattr(torch, dtype_state)
+
     h_parallel_bl = h_parallel_bl.cpu().detach().numpy()
     h_seq_bl = h_seq_bl.cpu().detach().numpy()
     h_cw_absl = h_cw_absl.cpu().detach().numpy()
@@ -85,9 +91,10 @@ def template_test_wrap_chunkwise__arbitrary_sequence_length(
     n_last_seq_bl = n_last_seq_bl.cpu().detach().numpy()
     m_last_seq_bl = m_last_seq_bl.cpu().detach().numpy()
 
-    c_last_cw_absl = c_last_cw_absl.cpu().detach().numpy()
-    n_last_cw_absl = n_last_cw_absl.cpu().detach().numpy()
-    m_last_cw_absl = m_last_cw_absl.cpu().detach().numpy()
+    c_last_cw_absl = c_last_cw_absl.float().cpu().detach().numpy()
+    n_last_cw_absl = n_last_cw_absl.float().cpu().detach().numpy()
+    m_last_cw_absl = m_last_cw_absl.float().cpu().detach().numpy()
+
 
     # match baselines
     np.testing.assert_allclose(

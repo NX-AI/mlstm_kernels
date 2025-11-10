@@ -163,7 +163,7 @@ def mlstm_chunkwise__recurrent_fw_C_kernel(
             tl.float32
         )
 
-        vecA_k_val = tl.flip(tl.cumsum(tl.flip(vecFlogsig_masked), axis=0)) + vecI_k_val
+        vecA_k_val = tl.flip(tl.cumsum(tl.flip(vecFlogsig_masked, dim=0), axis=0), dim=0) + vecI_k_val
 
         vecFfirst_k_val = tl.load(vecF + idx_b_BNH * str_vecFI_B_NH + k * L + 0).to(
             tl.float32
@@ -172,7 +172,7 @@ def mlstm_chunkwise__recurrent_fw_C_kernel(
         scaG_k_val = tl.sum(vecFlogsig_masked, axis=0) + vecFfirstlogsig_k_val
 
         # scaM_inter_k update
-        scaAmax_k_val, _ = tl.max(vecA_k_val)
+        scaAmax_k_val = tl.max(vecA_k_val)
         scaMinter_next_val = tl.maximum(scaG_k_val + scaMinter_k_val, scaAmax_k_val)
 
         # load matK_k, matV_k
