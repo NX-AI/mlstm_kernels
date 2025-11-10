@@ -293,3 +293,83 @@ def create_mlstm_flop_formulation_comparison_plot() -> Figure:
         fig.legend(handles=custom_lines, labels=legend_labels, **legend_kwargs)
 
     return fig
+
+
+def create_mlstm_flop_formulation_comparison_plot_poster() -> Figure:
+    fig_height = 4.5
+    n_cols = 1
+    # x_ticks = 2 ** np.arange(0, 14, 2)
+    x_ticks = [1, 2, 4, 8, 16, 32, 128, 512, 2048, 8192]
+    normalize_by_recurrent_flops: bool = False
+    add_causal_factors_parallel: bool = True
+
+    ylim = (0.0, 10e10)
+
+    # with get_plot_mpl_context():
+    fig, ax = plt.subplots(
+        1,
+        n_cols,
+        figsize=(1.2 * n_cols * fig_height, fig_height),
+        sharey=True,
+        sharex=True,
+        gridspec_kw={"wspace": 0.07, "hspace": 0.0},
+        # gridspec_kw={"width_ratios": [0.46, 0.54]},
+    )
+    fig = plot_mlstm_flops_for_all_formulations(
+        ax=ax,
+        chunkwise_flop_fn=count_flops_mlstmsig_chunkwise_parallel,
+        recurrent_flop_fn=count_flops_mlstmsig_recurrent,
+        parallel_flop_fn=count_flops_mlstmsig_parallel,
+        seq_len=8192,
+        d_qk=256,
+        d_hv=512,
+        num_points=50,
+        color_recurrent="tab:blue",
+        color_parallel="tab:orange",
+        color_chunkwise="tab:green",
+        x_ticks=x_ticks,
+        normalize_by_recurrent_flops=normalize_by_recurrent_flops,
+        add_causal_factors_parallel=add_causal_factors_parallel,
+        show_y_label=True,
+        ylim=ylim,
+    )
+
+    color_recurrent = "tab:blue"
+    color_parallel = "tab:orange"
+    color_chunkwise = "tab:green"
+    # Custom legend handles and labels
+    from matplotlib.lines import Line2D
+
+    # custom_lines = [
+    #     Line2D([0], [0], color="black", linestyle=":"),
+    #     Line2D([0], [0], color="black", linestyle="-"),
+    #     Line2D([0], [0], color="black", linestyle="--"),
+    # ]
+
+    # legend_labels = [
+    #     r"$F_\text{causal}$=0.5",
+    #     r"$F_\text{causal}$=0.66",
+    #     r"$F_\text{causal}$=1.0",
+    # ]
+    custom_lines = []
+    legend_labels = []
+
+    custom_lines.append(Line2D([0], [0], color=color_recurrent))
+    legend_labels.append("Recurrent")
+    for color in [color_parallel, color_chunkwise]:
+        custom_lines.append(Line2D([0], [0], color=color, lw=4))
+
+    legend_labels += ["Parallel", "Chunkwise"]
+
+    legend_kwargs = {
+        "loc": "upper left",
+        "ncol": 1,
+        "bbox_to_anchor": (0.92, 0.92),
+        "frameon": False,
+        "facecolor": "white",
+        # "alignment": "top",
+        "labelspacing": 1.1,
+    }
+    fig.legend(handles=custom_lines, labels=legend_labels, **legend_kwargs)
+
+    return fig

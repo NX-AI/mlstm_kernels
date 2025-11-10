@@ -15,8 +15,6 @@ from .roofline_analysis_mlstm import (
     Acc_intensity_h100,
     Acc_intensity_v100,
     get_arithmetic_intensity_mlstmsig,
-    get_flop_optimal_chunk_size_mlstmsig,
-    get_runtime_optimal_chunk_size_mlstmsig_intensity,
 )
 
 
@@ -303,5 +301,97 @@ def create_mlstm_arithmetic_intensity_plot() -> Figure:
             labels=legend_labels,
             **legend_kwargs,
         )
+
+    return fig
+
+
+def create_mlstm_arithmetic_intensity_plot_poster() -> Figure:
+    p_qk = 0.5
+    bytes_if = 2
+    bytes_qkv = 2
+
+    acc_intensities = [Acc_intensity_v100, Acc_intensity_a100, Acc_intensity_h100]
+    acc_labels = [r"V100$\approx$133", r"A100$\approx$160", r"H100$\approx$295"]
+
+    alg_int_dhv512_fp32 = partial(
+        get_arithmetic_intensity_mlstmsig,
+        d_hv=512,
+        p_qk=p_qk,
+        bytes_if=bytes_if,
+        bytes_qkv=bytes_qkv,
+        bytes_Cmn=4,
+    )
+    alg_int_dhv128_fp32 = partial(
+        get_arithmetic_intensity_mlstmsig,
+        d_hv=128,
+        p_qk=p_qk,
+        bytes_if=bytes_if,
+        bytes_qkv=bytes_qkv,
+        bytes_Cmn=4,
+    )
+
+    n_cols = 1
+    fig_height = 4
+
+    colors = list(reversed(["tab:blue", "tab:orange"]))
+    labels = [
+        r"$d_{hv}=512$",
+        r"$d_{hv}=128$",
+    ]
+
+    legend_kwargs = {
+        "loc": "upper left",
+        "ncol": 1,
+        "bbox_to_anchor": (1.17, 0.9),
+        "frameon": False,
+        "facecolor": "white",
+        # "alignment": "top",
+        "labelspacing": 1.1,
+    }
+    xticks = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
+    xlim = (16, 5100)
+    ylim = (6, 1600)
+
+    # with get_plot_mpl_context():
+    fig, ax = plt.subplots(
+        1,
+        n_cols,
+        figsize=(1.5 * n_cols * fig_height, fig_height),
+        sharey=True,
+        sharex=True,
+        gridspec_kw={"wspace": 0.1, "hspace": 0.5},
+        # gridspec_kw={"width_ratios": [0.46, 0.54]},
+    )
+    fig = plot_arithmetic_intensity(
+        list(reversed([alg_int_dhv512_fp32, alg_int_dhv128_fp32])),
+        p_qk,
+        ax=ax,
+        # yticks=np.arange(0, 950, 100),
+        colors=colors,
+        labels=labels,
+        acc_intensities=acc_intensities,
+        acc_labels=acc_labels,
+        show_title=True,
+        # title_suffix="| States: float32",
+        xticks=xticks,
+        xlim=xlim,
+        ylim=ylim,
+    )
+
+    from matplotlib.lines import Line2D
+
+    custom_lines = []
+    legend_labels = []
+    for color in colors:
+        custom_lines.append(Line2D([0], [0], color=color, lw=4))
+
+    if labels is not None:
+        legend_labels += labels
+
+    fig.legend(
+        handles=custom_lines,
+        labels=legend_labels,
+        **legend_kwargs,
+    )
 
     return fig
