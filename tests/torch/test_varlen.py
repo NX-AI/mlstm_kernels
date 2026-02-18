@@ -1,13 +1,14 @@
+#  Copyright (c) NXAI GmbH.
+#  This software may be used and distributed according to the terms of the NXAI Community License Agreement.
+
 import torch
 import numpy as np
-from typing import Callable
+from collections.abc import Callable
 from mlstm_kernels.torch.chunkwise import (
     mlstm_chunkwise__limit_chunk,
-    mlstm_chunkwise__xl_chunk,
 )
 
 from mlstm_kernels.torch.recurrent import (
-    mlstm_recurrent_sequence__native_fw,
     mlstm_recurrent_sequence__triton_step_fused_fw,
 )
 
@@ -27,7 +28,6 @@ def template_test_keep_state(
     atol: float = 1e-3,
     rtol: float = 1e-2,
 ) -> None:
-
     torch.manual_seed(42)
 
     # baseline inputs
@@ -124,8 +124,7 @@ def template_test_keep_state(
 
 
 def test_keep_state():
-    """This tests verifies that we can pad variable sequences to a fixed length and still get the correct final states.
-    """
+    """This tests verifies that we can pad variable sequences to a fixed length and still get the correct final states."""
     template_test_keep_state(
         B=1,
         NH=1,
