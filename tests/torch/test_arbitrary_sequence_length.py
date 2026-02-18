@@ -23,6 +23,10 @@ from mlstm_kernels.torch.recurrent.native_sequence import (
     mlstm_recurrent_sequence__native_fw,
     mlstm_recurrent_sequence__triton_step_fused_fw,
 )
+from mlstm_kernels.torch.kernel_wrappers import (
+    wrap_chunkwise__arbitrary_sequence_length,
+    wrap_chunkwise__arbitrary_sequence_length_with_padding,
+)
 
 from .template_test_arbitrary_sequence_length import (
     template_test_wrap_chunkwise__arbitrary_sequence_length,
@@ -48,6 +52,13 @@ from .template_test_arbitrary_sequence_length import (
     ],
 )
 @pytest.mark.parametrize("device", ["cpu"])
+@pytest.mark.parametrize(
+    "kernel_wrapper",
+    [
+        wrap_chunkwise__arbitrary_sequence_length,
+        wrap_chunkwise__arbitrary_sequence_length_with_padding,
+    ],
+)
 def test_wrap_chunkwise__arbitrary_sequence_length_cpu(
     caplog,
     sequence_length: int,
@@ -58,6 +69,7 @@ def test_wrap_chunkwise__arbitrary_sequence_length_cpu(
     sequence_target: Callable,
     step_target: Callable,
     device: str,
+    kernel_wrapper: Callable,
 ):
     """Tests the wrap_chunkwise__arbitrary_sequence_length function.
 
@@ -83,6 +95,7 @@ def test_wrap_chunkwise__arbitrary_sequence_length_cpu(
         atol=1e-5,
         rtol=1e-5,
         eps=1e-6,
+        kernel_wrapper=kernel_wrapper,
     )
 
 
@@ -99,6 +112,13 @@ def test_wrap_chunkwise__arbitrary_sequence_length_cpu(
     ],
 )
 @pytest.mark.parametrize("device", ["cpu"])
+@pytest.mark.parametrize(
+    "kernel_wrapper",
+    [
+        wrap_chunkwise__arbitrary_sequence_length,
+        wrap_chunkwise__arbitrary_sequence_length_with_padding,
+    ],
+)
 def test_wrap_chunkwise__arbitrary_sequence_length_single_step_cpu(
     caplog,
     step_baseline: Callable,
@@ -106,6 +126,7 @@ def test_wrap_chunkwise__arbitrary_sequence_length_single_step_cpu(
     sequence_target: Callable,
     step_target: Callable,
     device: str,
+    kernel_wrapper: Callable,
 ):
     """Tests the wrap_chunkwise__arbitrary_sequence_length function.
 
@@ -128,6 +149,7 @@ def test_wrap_chunkwise__arbitrary_sequence_length_single_step_cpu(
         atol=1e-5,
         rtol=1e-5,
         eps=1e-6,
+        kernel_wrapper=kernel_wrapper,
     )
 
 
@@ -149,6 +171,13 @@ def test_wrap_chunkwise__arbitrary_sequence_length_single_step_cpu(
     ],
 )
 @pytest.mark.parametrize("device", ["cuda"])
+@pytest.mark.parametrize(
+    "kernel_wrapper",
+    [
+        wrap_chunkwise__arbitrary_sequence_length,
+        wrap_chunkwise__arbitrary_sequence_length_with_padding,
+    ],
+)
 def test_wrap_chunkwise__arbitrary_sequence_length_limit_chunk(
     caplog,
     sequence_length: int,
@@ -159,6 +188,7 @@ def test_wrap_chunkwise__arbitrary_sequence_length_limit_chunk(
     sequence_target: Callable,
     step_target: Callable,
     device: str,
+    kernel_wrapper: Callable,
 ):
     """Tests the wrap_chunkwise__arbitrary_sequence_length function.
 
@@ -184,6 +214,7 @@ def test_wrap_chunkwise__arbitrary_sequence_length_limit_chunk(
         atol=5e-2,
         rtol=1e-2,
         eps=1e-6,
+        kernel_wrapper=kernel_wrapper,
     )
 
 
@@ -203,6 +234,13 @@ def test_wrap_chunkwise__arbitrary_sequence_length_limit_chunk(
     ],
 )
 @pytest.mark.parametrize("device", ["cuda"])
+@pytest.mark.parametrize(
+    "kernel_wrapper",
+    [
+        wrap_chunkwise__arbitrary_sequence_length,
+        wrap_chunkwise__arbitrary_sequence_length_with_padding,
+    ],
+)
 def test_wrap_chunkwise__arbitrary_sequence_length_single_step_fused_step(
     caplog,
     B: int,
@@ -214,6 +252,7 @@ def test_wrap_chunkwise__arbitrary_sequence_length_single_step_fused_step(
     sequence_target: Callable,
     step_target: Callable,
     device: str,
+    kernel_wrapper: Callable,
 ):
     caplog.set_level(logging.DEBUG)
     template_test_wrap_chunkwise__arbitrary_sequence_length_single_step(
@@ -230,6 +269,7 @@ def test_wrap_chunkwise__arbitrary_sequence_length_single_step_fused_step(
         atol=1e-5,
         rtol=1e-5,
         eps=1e-6,
+        kernel_wrapper=kernel_wrapper,
     )
 
 
@@ -296,6 +336,7 @@ def test_wrap_chunkwise__arbitrary_sequence_length_xl_chunk(
         eps=1e-6,
     )
 
+
 # TODO(max) support configurable state dtype for chunkwise kernels.
 # Note: We expect this to fail since currently the triton chunkwise kernels.
 # always use float32 states for numerical stability during training
@@ -358,10 +399,11 @@ def test_wrap_chunkwise__absl_state_dtype_bf16_xfail(
         device=device,
         dtype_inputs="float32",
         dtype_state="bfloat16",
-        atol=5.7e-1, # only the case [75-32] needs this large tolerances
+        atol=5.7e-1,  # only the case [75-32] needs this large tolerances
         rtol=1e-2,
         eps=1e-6,
     )
+
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 @pytest.mark.parametrize(
@@ -422,7 +464,7 @@ def test_wrap_chunkwise__absl_state_dtype_bf16(
         device=device,
         dtype_inputs="float32",
         dtype_state="bfloat16",
-        atol=5.7e-1, # only the case [75-32] needs this large tolerances
+        atol=5.7e-1,  # only the case [75-32] needs this large tolerances
         rtol=1e-2,
         eps=1e-6,
     )

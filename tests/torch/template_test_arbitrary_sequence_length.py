@@ -30,6 +30,7 @@ def template_test_wrap_chunkwise__arbitrary_sequence_length(
     atol: float = 1e-5,
     rtol: float = 1e-5,
     eps: float = 1e-6,
+    kernel_wrapper: Callable = wrap_chunkwise__arbitrary_sequence_length,
 ):
     """Tests the wrap_chunkwise__arbitrary_sequence_length function.
 
@@ -58,11 +59,13 @@ def template_test_wrap_chunkwise__arbitrary_sequence_length(
 
     # create the arbitrary sequence length chunkwise function
     chunkwise_arbitrary_seq_len_fn = partial(
-        wrap_chunkwise__arbitrary_sequence_length,
+        kernel_wrapper,
         mlstm_chunkwise_kernel=chunkwise_target,
-        mlstm_sequence_kernel=partial(sequence_target, dtype_state=getattr(torch, dtype_state)),
+        mlstm_sequence_kernel=partial(
+            sequence_target, dtype_state=getattr(torch, dtype_state)
+        ),
         mlstm_step_kernel=partial(step_target, dtype_state=getattr(torch, dtype_state)),
-        dtype_state=getattr(torch, dtype_state)
+        dtype_state=getattr(torch, dtype_state),
     )
 
     # run the chunkwise arbitrary seq_len fn
@@ -79,7 +82,9 @@ def template_test_wrap_chunkwise__arbitrary_sequence_length(
         )
     )
 
-    assert c_last_cw_absl.dtype == getattr(torch, dtype_state), f"Got: {c_last_cw_absl.dtype}, Expected: {getattr(torch, dtype_state)}"
+    assert c_last_cw_absl.dtype == getattr(
+        torch, dtype_state
+    ), f"Got: {c_last_cw_absl.dtype}, Expected: {getattr(torch, dtype_state)}"
     assert n_last_cw_absl.dtype == getattr(torch, dtype_state)
     assert m_last_cw_absl.dtype == getattr(torch, dtype_state)
 
@@ -94,7 +99,6 @@ def template_test_wrap_chunkwise__arbitrary_sequence_length(
     c_last_cw_absl = c_last_cw_absl.float().cpu().detach().numpy()
     n_last_cw_absl = n_last_cw_absl.float().cpu().detach().numpy()
     m_last_cw_absl = m_last_cw_absl.float().cpu().detach().numpy()
-
 
     # match baselines
     np.testing.assert_allclose(
@@ -159,6 +163,7 @@ def template_test_wrap_chunkwise__arbitrary_sequence_length_single_step(
     atol: float = 1e-5,
     rtol: float = 1e-5,
     eps: float = 1e-6,
+    kernel_wrapper: Callable = wrap_chunkwise__arbitrary_sequence_length,
 ):
     """Tests the wrap_chunkwise__arbitrary_sequence_length function, for a single step."""
     torch.manual_seed(42)
@@ -187,7 +192,7 @@ def template_test_wrap_chunkwise__arbitrary_sequence_length_single_step(
 
     # create the arbitrary sequence length chunkwise function
     chunkwise_arbitrary_seq_len_fn = partial(
-        wrap_chunkwise__arbitrary_sequence_length,
+        kernel_wrapper,
         mlstm_chunkwise_kernel=chunkwise_target,
         mlstm_sequence_kernel=sequence_target,
         mlstm_step_kernel=step_target,

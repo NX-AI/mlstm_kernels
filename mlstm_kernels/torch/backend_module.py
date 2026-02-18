@@ -14,7 +14,7 @@ from . import (
     get_mlstm_step_kernel,
 )
 from .kernel_wrappers import (
-    wrap_chunkwise__arbitrary_sequence_length,
+    wrap_chunkwise__arbitrary_sequence_length_with_padding,
     wrap_chunkwise__pad_zeros,
 )
 
@@ -107,7 +107,7 @@ class mLSTMBackend(nn.Module):
         self.step_kernel_fn = get_mlstm_step_kernel(config.step_kernel)
 
         self._inference_fn = partial(
-            wrap_chunkwise__arbitrary_sequence_length,
+            wrap_chunkwise__arbitrary_sequence_length_with_padding,
             mlstm_chunkwise_kernel=self.chunkwise_kernel_fn,
             mlstm_sequence_kernel=partial(
                 self.sequence_kernel_fn,
