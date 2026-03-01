@@ -74,6 +74,10 @@ def wrap_chunkwise__arbitrary_sequence_length(
 
     B, NH, S, DHQK = k.shape
     DHHV = v.shape[-1]
+    assert q.shape == (B, NH, S, DHQK)
+    assert v.shape == (B, NH, S, DHHV)
+    assert f.shape == (B, NH, S)
+    assert i.shape == (B, NH, S)
 
     chunk_sizes = []
     kcs = chunk_size
@@ -293,6 +297,10 @@ def wrap_chunkwise__arbitrary_sequence_length_with_padding(
 
     B, NH, S, DHQK = k.shape
     DHHV = v.shape[-1]
+    assert q.shape == (B, NH, S, DHQK), f"Expected q shape {(B, NH, S, DHQK)}, but got {q.shape}"
+    assert v.shape == (B, NH, S, DHHV), f"Expected v shape {(B, NH, S, DHHV)}, but got {v.shape}"
+    assert f.shape == (B, NH, S), f"Expected f shape {(B, NH, S)}, but got {f.shape}"
+    assert i.shape == (B, NH, S), f"Expected i shape {(B, NH, S)}, but got {i.shape}"
 
     c_state = (
         c_initial
@@ -313,7 +321,7 @@ def wrap_chunkwise__arbitrary_sequence_length_with_padding(
     if S > 1:
         # Pad the sequence to a multiple of the chunk size for the chunkwise kernel
         pad = ((S - 1) // chunk_size + 1) * chunk_size - S
-
+        # We pad the sequence dim S to the right. 
         h_out, (c_state, n_state, m_state) = mlstm_chunkwise_kernel(
             q=F.pad(q, (0, 0, 0, pad), value=0.0),
             k=F.pad(k, (0, 0, 0, pad), value=0.0),
