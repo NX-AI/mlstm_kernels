@@ -5,13 +5,16 @@ import functools
 
 import numpy as np
 import torch
-import triton.language as tl
 
-_torch_to_triton_dtype = {
-    torch.float32: tl.float32,
-    torch.float16: tl.float16,
-    torch.bfloat16: tl.bfloat16,
-}
+def torch2triton_dtype(dtype):
+    import triton.language as tl
+
+    _torch_to_triton_dtype = {
+        torch.float32: tl.float32,
+        torch.float16: tl.float16,
+        torch.bfloat16: tl.bfloat16,
+    }
+    return _torch_to_triton_dtype[dtype]
 
 
 def dtype2str(dtype: torch.dtype) -> str:
@@ -54,11 +57,6 @@ def contiguous_noctx(fn):
         )
 
     return wrapper
-
-
-def torch2triton_dtype(dtype):
-    return _torch_to_triton_dtype[dtype]
-
 
 def to_numpy(tensor: torch.Tensor) -> np.ndarray:
     return tensor.detach().cpu().to(dtype=torch.float64).numpy()

@@ -6,8 +6,6 @@ from collections.abc import Callable
 import torch
 
 from .native_step import mlstm_recurrent_step__native_fw
-from .triton_step import mlstm_recurrent_step__triton_fw
-from .triton_step_alternate import mlstm_recurrent_step__triton_alternate_fw
 
 
 def _mlstm_recurrent_sequence_loop_fw(
@@ -174,6 +172,8 @@ def mlstm_recurrent_sequence__triton_alternate_step_fw(
 ) -> (
     torch.Tensor | tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor, torch.Tensor]]
 ):
+    from .triton_step_alternate import mlstm_recurrent_step__triton_alternate_fw
+
     ret_tuple = _mlstm_recurrent_sequence_loop_fw(
         mlstm_step_fn=mlstm_recurrent_step__triton_alternate_fw,
         matQ=q,
@@ -210,6 +210,8 @@ def mlstm_recurrent_sequence__triton_step_fused_fw(
 ) -> (
     torch.Tensor | tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor, torch.Tensor]]
 ):
+    from .triton_step import mlstm_recurrent_step__triton_fw
+
     ret_tuple = _mlstm_recurrent_sequence_loop_fw(
         mlstm_step_fn=mlstm_recurrent_step__triton_fw,
         matQ=q,
