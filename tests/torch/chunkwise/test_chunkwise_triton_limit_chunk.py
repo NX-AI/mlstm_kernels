@@ -6,6 +6,12 @@ import logging
 import pytest
 import torch
 
+from mlstm_kernels.triton.chunkwise.limit_chunk import (
+    mlstm_chunkwise__parallel_bw_dQKV_kernel,
+    mlstm_chunkwise__parallel_fw_H_kernel,
+    mlstm_chunkwise__recurrent_bw_dC_kernel,
+    mlstm_chunkwise__recurrent_fw_C_kernel,
+)
 from mlstm_kernels.torch.chunkwise.triton_limit_chunk import (
     mlstm_chunkwise__limit_chunk,
 )
@@ -18,6 +24,21 @@ from ...conftest import final_combinations
 LOGGER = logging.getLogger(__name__)
 
 TEST_FOLDER_NAME_PREFIX = "chunkwise-triton_limit_chunk"
+
+
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        mlstm_chunkwise__recurrent_fw_C_kernel,
+        mlstm_chunkwise__parallel_fw_H_kernel,
+        mlstm_chunkwise__recurrent_bw_dC_kernel,
+        mlstm_chunkwise__parallel_bw_dQKV_kernel,
+    ],
+)
+def test_batch_size_does_not_specialize(kernel):
+    batch_param = next(param for param in kernel.params if param.name == "B")
+    assert not batch_param.is_constexpr
+    assert batch_param.do_not_specialize
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")

@@ -29,7 +29,7 @@ import triton
 import triton.language as tl
 
 
-@triton.jit
+@triton.jit(do_not_specialize=["B"])
 def mlstm_chunkwise__recurrent_fw_C_kernel(
     matK,  # (B, NH, S, DHQK)
     matV,  # (B, NH, S, DHHV)
@@ -63,7 +63,7 @@ def mlstm_chunkwise__recurrent_fw_C_kernel(
     str_vecNinitial_B_NH,
     str_vecNinitial_DHQK,
     str_scaMinterinitial_B_NH,
-    B: tl.constexpr,
+    B,
     NH: tl.constexpr,
     S: tl.constexpr,
     DHQK: tl.constexpr,

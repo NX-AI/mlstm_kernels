@@ -29,7 +29,7 @@ import triton
 import triton.language as tl
 
 
-@triton.jit
+@triton.jit(do_not_specialize=["B"])
 def mlstm_chunkwise__parallel_fw_H_kernel(
     matQ,  # (B, NH, S, DHQK)
     matK,  # (B, NH, S, DHQK)
@@ -60,7 +60,7 @@ def mlstm_chunkwise__parallel_fw_H_kernel(
     str_vecBI_L,
     str_vecMN_B_NH,
     str_vecMN_S,
-    B: tl.constexpr,
+    B,
     NH: tl.constexpr,
     S: tl.constexpr,
     DHQK: tl.constexpr,
