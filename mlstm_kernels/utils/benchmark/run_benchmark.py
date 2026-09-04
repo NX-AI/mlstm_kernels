@@ -10,7 +10,7 @@ from typing import Literal
 
 import pandas as pd
 import torch
-from omegaconf import OmegaConf
+import yaml
 
 from .benchmarks.interface import BenchmarkCreator, ModelBenchmarkCreator
 from .param_handling import BenchmarkConfig
@@ -166,9 +166,8 @@ def run_and_record_benchmarks(
     benchmark_folder = output_folder / benchmark_config.benchmark_name
     benchmark_folder.mkdir(parents=True, exist_ok=False)
 
-    OmegaConf.save(
-        OmegaConf.create(asdict(benchmark_config)), benchmark_folder / "config.yaml"
-    )
+    with (benchmark_folder / "config.yaml").open("w", encoding="utf-8") as config_file:
+        yaml.safe_dump(asdict(benchmark_config), config_file, sort_keys=False)
 
     if benchmark_type == "kernel":
         run_benchmarks_fn = run_benchmarks

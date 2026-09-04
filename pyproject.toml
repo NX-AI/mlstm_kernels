@@ -26,6 +26,7 @@ dependencies = [
     "matplotlib",
     "numpy",
     "omegaconf",
+    "PyYAML",
     "torch",
 ]
 

@@ -81,3 +81,4 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+mlstm_kernels/utils/.DS_Store
