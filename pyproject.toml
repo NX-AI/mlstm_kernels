@@ -21,13 +21,17 @@ classifiers = [
 ]
 keywords = ["mLSTM", "xLSTM", "LSTM", "Transformer", "Machine Learning", "Deep Learning", "State Space Models"]
 dependencies = [
-    "dacite",
     "einops",
     "matplotlib",
     "numpy",
-    "omegaconf",
     "PyYAML",
     "torch",
+]
+
+[dependency-groups]
+dev = [
+    "dacite",
+    "omegaconf",
 ]
 
 [tool.setuptools.packages.find]
