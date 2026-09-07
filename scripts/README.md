@@ -19,6 +19,13 @@ A Dockerfile and corresponding environment file are included in the repository t
 * `envs/hf_model_benchmark_amd.dockerfile`
 * `envs/environment_pt240_rocm64.txt`
 
+The benchmark scripts use the development dependencies defined in `pyproject.toml`.
+When setting up the repository with `uv`, install the `dev` dependency group:
+
+```bash
+uv sync --group dev
+```
+
 > 🐳 The Docker image used for benchmarking was built using the above files. While they provide a tested baseline, your results may still vary depending on your specific system configuration and ROCm/PyTorch version.
 
 ## ⚡️Tuning for `--ttft` benchmark
