@@ -42,11 +42,10 @@ jobs:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
 
-    # # Dedicated environments with protections for publishing are strongly recommended.
-    # environment:
-    #   name: pypi
-    #   # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
-    #   # url: https://pypi.org/p/YOURPROJECT
+    # Dedicated environments with protections for publishing are strongly recommended.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/mlstm-kernels/
 
     steps:
       - name: Retrieve release distributions
