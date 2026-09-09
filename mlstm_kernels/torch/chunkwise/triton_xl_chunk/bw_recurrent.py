@@ -19,8 +19,6 @@ def mlstm_chunkwise__recurrent_bw_dC(
     vecN_out: torch.Tensor,  # (B, NH, S)
     matDeltaC_last: torch.Tensor = None,  # (B, NH, DHQK, DHHV)
     qk_scale: float = None,
-    chunk_size: int = 64,
-    save_states_every_nth_chunk: int = 1,
     num_warps: int | None = None,
     num_stages: int | None = None,
     eps: float = 0.0,
@@ -31,31 +29,18 @@ def mlstm_chunkwise__recurrent_bw_dC(
     """
     B, NH, S, DHQK, DHHV = *matQ.shape, matDeltaH.shape[-1]
     _dtype, _device = matQ.dtype, matQ.device
-    L = chunk_size
+    NC = scaM_inter.shape[-1] - 1
+    L = S // NC
     assert is_power_of_2(L), "Chunk size must be a power of 2."
     assert S % L == 0, "S must be divisible by chunk_size."
-    NC = S // L
-
-    assert (
-        save_states_every_nth_chunk > 0
-    ), "save_states_every_nth_chunk must be positive."
-    assert (
-        save_states_every_nth_chunk <= NC
-    ), "save_states_every_nth_chunk must be <= NC."
-
-    assert is_power_of_2(
-        save_states_every_nth_chunk
-    ), f"save_states_every_nth_chunk must be a power of 2. Got {save_states_every_nth_chunk}."
 
     if qk_scale is None:
         qk_scale = DHQK**-0.5
 
     USE_LAST_STATE = matDeltaC_last is not None
 
-    num_chunks_saved = NC // save_states_every_nth_chunk
-
     matDeltaC_states = torch.empty(
-        (B, NH, (num_chunks_saved + 1) * DHQK, DHHV),
+        (B, NH, (NC + 1) * DHQK, DHHV),
         dtype=torch.float32,
         device=_device,
     )
@@ -109,7 +94,6 @@ def mlstm_chunkwise__recurrent_bw_dC(
         L=L,
         siz_b_DHQK=siz_b_DHQK,
         siz_b_DHHV=siz_b_DHHV,
-        save_states_every_nth_chunk=save_states_every_nth_chunk,
         USE_LAST_STATE=USE_LAST_STATE,
         DTYPE=torch2triton_dtype(_dtype),
         EPS=eps,
