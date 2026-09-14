@@ -55,6 +55,46 @@ def test_triton_chunkwise_xl_chunk_vs_native_parallel_stablef_fp32(
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
+@pytest.mark.parametrize(["S", "B", "NH", "DHQK", "DHHV"], final_combinations)
+def test_inter_vs_intra_chunks(S, B, NH, DHQK, DHHV):
+    torch.manual_seed(2025)
+    q = torch.randn(B, NH, S, DHQK, device="cuda", requires_grad=True)
+    k = torch.randn(B, NH, S, DHQK, device="cuda", requires_grad=True)
+    v = torch.randn(B, NH, S, DHHV, device="cuda", requires_grad=True)
+    i = torch.randn(B, NH, S, device="cuda", requires_grad=True)
+    f = torch.randn(B, NH, S, device="cuda", requires_grad=True)
+
+    h_ref = mlstm_chunkwise__xl_chunk(
+        q, k, v, i, f,
+        chunk_size=128, chunk_size_inter=128, chunk_size_intra=128,
+        siz_b_L_parallel=64, siz_b_L_loop=64,
+        siz_b_DH_parallel=DHHV, siz_b_DH_loop=DHHV,
+    )
+
+    dh = torch.randn_like(h_ref)
+    dq_ref, dk_ref, dv_ref, di_ref, df_ref = torch.autograd.grad(
+        [h_ref], [q, k, v, i, f], [dh]
+    )
+
+    h = mlstm_chunkwise__xl_chunk(
+        q, k, v, i, f,
+        chunk_size=128, chunk_size_inter=64, chunk_size_intra=128,
+        siz_b_L_parallel=64, siz_b_L_loop=64,
+        siz_b_DH_parallel=DHHV, siz_b_DH_loop=DHHV
+    )
+    dq, dk, dv, di, df = torch.autograd.grad(
+        [h], [q, k, v, i, f], [dh]
+    )
+
+    torch.testing.assert_close(h, h_ref)
+    torch.testing.assert_close(dq, dq_ref)
+    torch.testing.assert_close(dk, dk_ref)
+    torch.testing.assert_close(dv, dv_ref)
+    torch.testing.assert_close(di, di_ref)
+    torch.testing.assert_close(df, df_ref)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="No GPU available.")
 def test_state_passing(mlstm_state_passing_test, state_passing_qkvif):
     num_chunks = state_passing_qkvif[0].shape[2] // 64  # <- chunk size = 64
 
