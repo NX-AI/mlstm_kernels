@@ -156,7 +156,7 @@ def mlstm_chunkwise__parallel_fw_H_kernel(
         matK_val = tl.load(matK_ptr, boundary_check=(0, 1)).to(DTYPE)
 
         # accumulate matS (L, L)
-        matS_val += tl.dot(matQ_val, matK_val) * qk_scale
+        matS_val += (tl.dot(matQ_val, matK_val) * qk_scale).to(DTYPE)
 
         # compute matQbar (L, siz_b_DHQK)
         # tl.static_print("matQ_val", matQ_val)
