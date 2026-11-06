@@ -267,24 +267,26 @@ Note: The the JAX tests were only tested on NVIDIA H100 GPUs.
 Please cite our papers if you use this codebase, or otherwise find our work valuable:
 
 ```
-@article{beck:25tfla,
-  title        = {{Tiled Flash Linear Attention}: More Efficient Linear RNN and xLSTM Kernels},
-  author       = {Maximilian Beck and Korbinian Pöppel and Phillip Lippe and Sepp Hochreiter},
-  year         = {2025},
-  volume       = {2503.14376},
-  journal      = {arXiv},
-  primaryclass = {cs.LG},
-  url          = {https://arxiv.org/abs/2503.14376}
+@inproceedings{beck:25tfla,
+  title     = {{Tiled Flash Linear Attention}: More Efficient Linear {RNN} and {xLSTM} Kernels},
+  author    = {Beck, Maximilian and P{\"o}ppel, Korbinian and Lippe, Phillip and Hochreiter, Sepp},
+  booktitle = {Advances in Neural Information Processing Systems},
+  year      = {2025},
+  eprint    = {2503.14376},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url       = {https://arxiv.org/abs/2503.14376}
 }
 
-@article{beck:25xlstm7b,
-  title        = {{xLSTM 7B}: A Recurrent LLM for Fast and Efficient Inference},
-  author       = {Maximilian Beck and Korbinian Pöppel and Phillip Lippe and Richard Kurle and Patrick M. Blies and Günter Klambauer and Sebastian Böck and Sepp Hochreiter},
-  year         = {2025},
-  volume       = {2503.13427},
-  journal      = {arXiv},
-  primaryclass = {cs.LG},
-  url          = {https://arxiv.org/abs/2503.13427}
+@inproceedings{beck:25xlstm7b,
+  title     = {{xLSTM 7B}: A Recurrent {LLM} for Fast and Efficient Inference},
+  author    = {Beck, Maximilian and P{\"o}ppel, Korbinian and Lippe, Phillip and Kurle, Richard and Blies, Patrick M. and Klambauer, G{\"u}nter and B{\"o}ck, Sebastian and Hochreiter, Sepp},
+  booktitle = {International Conference on Machine Learning},
+  year      = {2025},
+  eprint    = {2503.13427},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url       = {https://arxiv.org/abs/2503.13427}
 }
 
 @inproceedings{beck:24xlstm,
